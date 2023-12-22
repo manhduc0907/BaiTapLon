@@ -1,11 +1,16 @@
 package com.example.appxemlich;
 
+import static com.example.appxemlich.CalenderUtils.daysInMonthArray;
+import static com.example.appxemlich.CalenderUtils.monthYearFromDate;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,8 +34,21 @@ public class MainActivity extends AppCompatActivity implements CalenderAdapter.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initWidgets();
-        selectedDate = LocalDate.now();
+        CalenderUtils.selectedDate = LocalDate.now();
         setMonthView();
+
+        DatePicker datePicker = findViewById(R.id.datePicker);
+
+        // Thêm lắng nghe sự kiện khi người dùng chọn một ngày
+
+        datePicker.setOnDateChangedListener(new DatePicker.OnDateChangedListener() {
+            @Override
+            public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                // Xử lý sự kiện khi ngày được chọn
+                String selectedDate = dayOfMonth + "/" + (monthOfYear + 1) + "/" + year;
+                Toast.makeText(MainActivity.this, "Selected Date: " + selectedDate, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 
@@ -42,63 +60,40 @@ public class MainActivity extends AppCompatActivity implements CalenderAdapter.O
     }
     private void setMonthView()
     {
-        monthYearText.setText(monthYearFromDate(selectedDate));
-        ArrayList<String> daysInMonth = daysInMonthArray(selectedDate);
+        monthYearText.setText(monthYearFromDate(CalenderUtils.selectedDate));
+        ArrayList<LocalDate> daysInMonth = daysInMonthArray(CalenderUtils.selectedDate);
         CalenderAdapter calenderAdapter = new CalenderAdapter(daysInMonth,this);
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getApplicationContext(), 7);
         calendarRecyclerView.setLayoutManager(layoutManager);
         calendarRecyclerView.setAdapter(calenderAdapter);
     }
 
-    private ArrayList<String> daysInMonthArray(LocalDate date)
-    {
-        ArrayList<String> daysInMonthArray = new ArrayList<>();
-        YearMonth yearMonth = YearMonth.from(date);
 
-        int daysInMonth = yearMonth.lengthOfMonth();
-
-        LocalDate firstOfMonth = selectedDate.withDayOfMonth(1);
-        int dayOfWeek = firstOfMonth.getDayOfWeek().getValue();
-        int i;
-        for( i = 1; i <= 42; i++);
-        {
-            if(i <= dayOfWeek || i > daysInMonth + dayOfWeek)
-            {
-                daysInMonthArray.add("");
-            }
-            else
-            {
-                daysInMonthArray.add(String.valueOf(i -dayOfWeek));
-            }
-        }
-        return daysInMonthArray;
-    }
-
-    private String monthYearFromDate(LocalDate date)
-    {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM yyy");
-        return date.format(formatter);
-    }
 
     public void previousMonthAction(View view)
     {
-        selectedDate = selectedDate.minusMonths(1);
+        CalenderUtils.selectedDate = CalenderUtils.selectedDate.minusMonths(1);
         setMonthView();
     }
 
     public void nextMonthAction(View view)
     {
-        selectedDate = selectedDate.plusMonths(1);
+        CalenderUtils.selectedDate = CalenderUtils.selectedDate.plusMonths(1);
         setMonthView();
     }
 
     @Override
-    public void onItemClick(int position, String dayText)
+    public void onItemClick(int position, LocalDate date)
     {
-        if (dayText.equals(""))
+        if (date !=null)
         {
-            String message = "Selected Date" + dayText + "" + monthYearFromDate(selectedDate);
-            Toast.makeText(this,message, Toast.LENGTH_LONG).show();
+            CalenderUtils.selectedDate = date;
+            setMonthView();
         }
+    }
+
+    public void WeeklyAction(View view)
+    {
+        startActivity(new Intent(this, WeekViewActivity.class));
     }
 }
